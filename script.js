@@ -190,7 +190,7 @@ function loadLines() {
                 'properties': {},
                 'geometry': {
                     'type': 'LineString',
-                    'coordinates': Object.values(line).filter(Array.isArray)
+                    'coordinates': catmullRomFitting(Object.values(line).filter(Array.isArray), 1)
                 }
             }
         })

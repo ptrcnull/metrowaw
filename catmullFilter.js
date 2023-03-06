@@ -11,8 +11,7 @@
  * @param  {Array} data - Array of points, each point being an array with lng and lat
  * @return {Array} result - Array of points, but interpolated
  */
-var catmullRomFitting = function (data,alpha) {
-    data = data.map(([ x, y ]) => ({ x, y }))
+var catmullRomFitting = function (data,alpha = 0.5) {
     const res = []
     
     if (alpha == 0 || alpha === undefined) {
@@ -29,9 +28,9 @@ var catmullRomFitting = function (data,alpha) {
         p2 = data[i + 1];
         p3 = i + 2 < length ? data[i + 2] : p2;
 
-        d1 = Math.sqrt(Math.pow(p0.x - p1.x, 2) + Math.pow(p0.y - p1.y, 2));
-        d2 = Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
-        d3 = Math.sqrt(Math.pow(p2.x - p3.x, 2) + Math.pow(p2.y - p3.y, 2));
+        d1 = Math.sqrt(Math.pow(p0[0] - p1[0], 2) + Math.pow(p0[1] - p1[1], 2));
+        d2 = Math.sqrt(Math.pow(p1[0] - p2[0], 2) + Math.pow(p1[1] - p2[1], 2));
+        d3 = Math.sqrt(Math.pow(p2[0] - p3[0], 2) + Math.pow(p2[1] - p3[1], 2));
 
         // Catmull-Rom to Cubic Bezier conversion matrix
 
@@ -61,22 +60,48 @@ var catmullRomFitting = function (data,alpha) {
           M = 1 / M;
         }
 
-        bp1 = { x: (-d2pow2A * p0.x + A * p1.x + d1pow2A * p2.x) * N,
-          y: (-d2pow2A * p0.y + A * p1.y + d1pow2A * p2.y) * N };
+        bp1 = [
+          (-d2pow2A * p0[0] + A * p1[0] + d1pow2A * p2[0]) * N,
+          (-d2pow2A * p0[1] + A * p1[1] + d1pow2A * p2[1]) * N
+        ]
 
-        bp2 = { x: (d3pow2A * p1.x + B * p2.x - d2pow2A * p3.x) * M,
-          y: (d3pow2A * p1.y + B * p2.y - d2pow2A * p3.y) * M };
+        bp2 = [
+          (d3pow2A * p1[0] + B * p2[0] - d2pow2A * p3[0]) * M,
+          (d3pow2A * p1[1] + B * p2[1] - d2pow2A * p3[1]) * M
+        ]
 
-        if (bp1.x == 0 && bp1.y == 0) {
+        if (bp1[0] == 0 && bp1[1] == 0) {
           bp1 = p1;
         }
-        if (bp2.x == 0 && bp2.y == 0) {
+        if (bp2[0] == 0 && bp2[1] == 0) {
           bp2 = p2;
         }
-        
-        res.push(bp1, bp2, p2)
+
+        for (let d = 0; d < 1; d += 0.05) {
+          const cb1 = lerp(p1, bp1, d)
+          const cb2 = lerp(bp1, bp2, d)
+          const cb3 = lerp(bp2, p2, d)
+
+          const qb1 = lerp(cb1, cb2, d)
+          const qb2 = lerp(cb2, cb3, d)
+
+          const p = lerp(qb1, qb2, d)
+          res.push(p)
+        }
+
+        // res.push(bp1, bp2)
+        res.push(p2)
       }
 
-      return res.map(({ x, y }) => [ x, y ])
+      return res
     }
+}
+
+function lerp(p1, p2, d) {
+  const xd = p2[0] - p1[0]
+  const yd = p2[1] - p1[1]
+  return [
+    p1[0] + xd * d,
+    p1[1] + yd * d
+  ]
 }
