@@ -82,7 +82,8 @@ const lines = [
         'Toruńska': [ 21.01322, 52.29380 ],
         'Żerań FSO': [ 21.00280, 52.29049 ],
         'Potok': [ 20.98718, 52.27891 ],
-        'Marymont': [ 20.9717196, 52.2716615 ],
+        // https://www.transport-publiczny.pl/wiadomosci/rusza-przetarg-na-prace-przedprojektowe-dla-iv-linii-metra-wraz-z-stp-82527.html
+        'Marymont (M2+M4)': [ 20.97470, 52.27001, -58 ],
     },
     {
         '#meta': {
@@ -105,37 +106,37 @@ const lines = [
         'Stary Mokotów': [ 21.02393, 52.19971 ],
         'Racławicka': [ 21.0121943, 52.1989416 ], // M1
         'Wyględów': [ 20.99281, 52.19681 ],
-        'Żwirki i Wigury': [ 20.98203, 52.19303 ],
+        'Żwirki i Wigury (M3+M4)': [ 20.98126, 52.19365, -90 ],
     },
     {
         '#meta': {
             name: 'M4',
             color: '#FFC000'
         },
-        // IDZD
-        'Tarchomin': [ 20.96106, 52.31701 ],
-        'Henryków': [ 20.9752, 52.3165 ],
-        'Stare Świdry': [ 20.9836, 52.3079 ], // ???
-        'Ruda': [ 20.97060, 52.28531 ],
-        'Marymont': [ 20.9717196, 52.2716615 ], // M1
-        'Plac Grundwaldzki': [ 20.97962, 52.26264 ],
-        'Rondo Radosława': [ 20.98245, 52.25475 ],
-        'Cmentarz Żydowski': [ 20.97728, 52.24422 ],
-        'Kercelak': [ 20.98024, 52.23699 ],
-        'Rondo Daszyńskiego': [ 20.982848, 52.230052 ], // M2
-        'Plac Zawiszy': [ 20.98911, 52.22486 ],
-        'Plac Narutowicza': [ 20.98400, 52.21894 ],
-        'Banacha': [ 20.98162, 52.21014 ],
-        'Rakowiec': [ 20.98184, 52.20167 ],
-        'Żwirki i Wigury': [ 20.98203, 52.19303 ],
-        'Służewiec': [ 20.98700, 52.18145 ],
-        'Rondo UE': [ 21.00218, 52.17817 ],
-        'Ksawerów': [ 21.01405, 52.17985 ],
-        'Wilanowska': [ 21.0231369, 52.1818 ], // M1
-        'Dolina Służewiecka': [ 21.04421, 52.17518 ],
-        'Stegny': [ 21.05559, 52.17258 ],
-        'Sobieskiego': [ 21.06804, 52.16979 ],
-        'Wilanów': [ 21.08353, 52.16624 ],
+        // https://www.transport-publiczny.pl/wiadomosci/rusza-przetarg-na-prace-przedprojektowe-dla-iv-linii-metra-wraz-z-stp-82527.html
+        'Myśliborska': [ 20.96319, 52.31763, 20 ],
+        'Obrazkowa': [ 20.97582, 52.31494, -50 ],
+        'Płochocińska': [ 20.98301, 52.30784, -40 ],
+        'Ruda': [ 20.97636, 52.28376, -78 ],
+        'Marymont (M2+M4)': [ 20.97470, 52.27001, -58 ],
+        'Rydygiera': [ 20.98133, 52.26028, -75 ],
+        'Rondo Radosława': [ 20.98185, 52.25418, -100 ],
+        'Cmentarz Żydowski': [ 20.97794, 52.24353, -70 ],
+        'Okopowa': [ 20.98025, 52.23757, -70 ],
+        'Rondo Daszyńskiego (M4)': [ 20.98383, 52.23108, -50 ],
+        'Plac Zawiszy': [ 20.98789, 52.22635, -54 ],
+        'Plac Narutowicza (M4)': [ 20.98304, 52.21858, -130 ],
+        'Bitwy Warszawskiej 1920': [ 20.97653, 52.21111 ],
+        'Wiślicka': [ 20.97668, 52.20414, -25 ],
+        'Żwirki i Wigury (M3+M4)': [ 20.98126, 52.19365, -90 ],
+        'Służewiec': [ 20.98922, 52.18140, -12 ],
+        'Rondo Unii Europejskiej': [ 21.00179, 52.17866, -10 ],
+        'Smoluchowskiego': [ 21.01251, 52.17959, 15 ],
+        'Wilanowska (M4)': [ 21.02282, 52.18053, 0 ],
+        'Dolina Służewiecka': [ 21.04421, 52.17518, -14 ], // missing picture
+        'Patkowskiego': [ 21.05437, 52.17284, -13 ],
+        'Sobieskiego': [ 21.06804, 52.16979, -13 ],
+        'Wilanów': [ 21.08450, 52.16631, -90 ],
     },
     {
         '#meta': {
@@ -177,12 +178,25 @@ myCuteMarker.innerHTML = `
     </svg>
 `
 
+function offsetPoint(point) {
+    const xy = point.slice(0, 2)
+    const [ x, y ] = xy
+    const angle = point[2] * (Math.PI / 180)
+    const scale = 0.001
+    const offsetX = Math.cos(angle) * scale
+    const offsetY = Math.sin(angle) * scale
+    return [[ x - offsetX, y - offsetY ], xy, [ x + offsetX, y + offsetY ]]
+}
+
 function loadLines() {
     let markers = {}
     for (let line of lines) {
         const meta = line['#meta']
         console.log('adding line', meta)
         markers = { ...line, ...markers }
+        const points = Object.values(line)
+            .filter(Array.isArray)
+            .flatMap(point => point[2] ? offsetPoint(point) : [point])
         map.addSource(meta.name, {
             type: 'geojson',
             data: {
@@ -190,7 +204,7 @@ function loadLines() {
                 'properties': {},
                 'geometry': {
                     'type': 'LineString',
-                    'coordinates': catmullRomFitting(Object.values(line).filter(Array.isArray), 1)
+                    'coordinates': catmullRomFitting(points, 1)
                 }
             }
         })
